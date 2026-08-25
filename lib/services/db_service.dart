@@ -91,10 +91,12 @@ class DbService extends ChangeNotifier {
             final json = med.toJson();
             if (med.id.isNotEmpty && !med.id.startsWith('local_')) {
               json['id'] = med.id;
+            } else {
+              json.remove('id');
             }
-            final insertRes = await _client.from('medicines').upsert(json).select().single();
+            final insertRes = await _client.from('medicines').insert(json).select().single();
             _medicines[i] = Medicine.fromJson(insertRes);
-            debugPrint("Synced local medicine ${med.name} to Supabase with ID: ${_medicines[i].id}");
+            debugPrint("Synced local medicine ${med.name} to Supabase with real UUID: ${_medicines[i].id}");
           } catch (syncErr) {
             debugPrint("Could not sync medicine ${med.name} to Supabase: $syncErr");
           }
