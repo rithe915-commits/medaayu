@@ -62,14 +62,15 @@ Deno.serve(async (req) => {
       ? medicines.map(m => `- ${m.name} (${m.form}, ${m.frequency}, ${m.food_instruction})`).join("\n")
       : "No active medications.";
 
-    // 3. Call LLM (Gemini API) if key is set, otherwise use high-quality template tips
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
+    const meshApiKey = Deno.env.get('MESH_API_KEY') ?? '';
+
+    // 3. Call LLM (Mesh API or Google Gemini API)
     let careTipsText = "";
 
     const userLang = (profile.language || 'english').toLowerCase();
 
-    if (geminiApiKey) {
-      try {
-        const prompt = `You are a professional elder-care assistant. Write 3 short wellness tips for:
+    const prompt = `You are a professional elder-care assistant. Write 3 short wellness tips for:
 Name: ${profile.full_name}
 Age: ${profile.age ?? 'Not specified'}
 Gender: ${profile.gender ?? 'Not specified'}
@@ -86,7 +87,44 @@ RULES:
 
 Provide the output as plain text.`;
 
-        // Try Gemini 2.5 Flash first, with automatic fallback
+    // 3A. Try Mesh API (google/gemini-2.5-flash-lite)
+    if (meshApiKey) {
+      try {
+        console.log("Calling Mesh API for google/gemini-2.5-flash-lite...");
+        const meshRes = await fetch("https://api.meshapi.ai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${meshApiKey}`
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              { role: "system", content: "You are a professional elder-care assistant." },
+              { role: "user", content: prompt }
+            ],
+            temperature: 0.7
+          })
+        });
+
+        if (meshRes.ok) {
+          const meshData = await meshRes.json();
+          const text = meshData.choices?.[0]?.message?.content;
+          if (text) {
+            careTipsText = text;
+            console.log("Care tips successfully generated via Mesh API (google/gemini-2.5-flash-lite)!");
+          }
+        } else {
+          console.warn("Mesh API error response:", await meshRes.text());
+        }
+      } catch (meshErr) {
+        console.warn("Error calling Mesh API:", meshErr);
+      }
+    }
+
+    // 3B. Try Google Gemini API directly if careTipsText not yet populated
+    if (!careTipsText && geminiApiKey) {
+      try {
         const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
         for (const model of models) {
           try {
@@ -106,7 +144,7 @@ Provide the output as plain text.`;
               const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
               if (generatedText) {
                 careTipsText = generatedText;
-                console.log(`Care tips successfully generated using ${model}!`);
+                console.log(`Care tips successfully generated using Google Gemini (${model})!`);
                 break;
               }
             }
