@@ -254,11 +254,11 @@ class _OnboardingViewState extends State<OnboardingView> {
                       prefixIcon: const Icon(Icons.language_rounded, color: Color(0xFF3A86F0)),
                     ),
                     dropdownColor: Colors.white,
-                    style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15),
+                    style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
                     items: const [
-                      DropdownMenuItem(value: "english", child: Text("🇬🇧 English")),
-                      DropdownMenuItem(value: "hindi", child: Text("🇮🇳 हिंदी (Hindi)")),
-                      DropdownMenuItem(value: "marathi", child: Text("🇮🇳 मराठी (Marathi)")),
+                      DropdownMenuItem(value: "english", child: Text("🇬🇧 English", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: "hindi", child: Text("🇮🇳 हिंदी (Hindi)", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
+                      DropdownMenuItem(value: "marathi", child: Text("🇮🇳 मराठी (Marathi)", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
                     ],
                     onChanged: (val) {
                       if (val != null) {

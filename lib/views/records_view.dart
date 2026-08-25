@@ -517,11 +517,13 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                   // Category Dropdown
                   DropdownButtonFormField<String>(
                     value: selectedCategory,
+                    dropdownColor: Colors.white,
+                    style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
                     decoration: InputDecoration(
                       labelText: "Category",
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                    items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600)))).toList(),
                     onChanged: (val) {
                       if (val != null) setSheetState(() => selectedCategory = val);
                     },

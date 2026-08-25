@@ -3241,7 +3241,7 @@ class _AddProfileDialogState extends State<AddProfileDialog> {
                 dropdownColor: Colors.white,
                 decoration: DesignSystem.premiumInputDecoration(labelText: "Gender"),
                 items: ['Male', 'Female', 'Other'].map((g) {
-                  return DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(fontSize: 14)));
+                  return DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(color: Color(0xFF1F2937), fontSize: 14, fontWeight: FontWeight.w600)));
                 }).toList(),
                 onChanged: (val) {
                   if (val != null) setState(() => _gender = val);
@@ -3253,17 +3253,16 @@ class _AddProfileDialogState extends State<AddProfileDialog> {
         const SizedBox(height: 16),
         DropdownButtonFormField<String>(
           value: _language,
-          style: const TextStyle(color: Color(0xFF1F2937)),
+          style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
           dropdownColor: Colors.white,
           decoration: DesignSystem.premiumInputDecoration(
             labelText: "Reminder Language",
-            prefixIcon: const Icon(Icons.translate_rounded, size: 20),
+            prefixIcon: const Icon(Icons.translate_rounded, size: 20, color: Color(0xFF3A86F0)),
           ),
           items: const [
-            DropdownMenuItem(value: 'english', child: Text("English", style: TextStyle(fontSize: 14))),
-            DropdownMenuItem(value: 'hindi', child: Text("Hindi (हिंदी)", style: TextStyle(fontSize: 14))),
-            DropdownMenuItem(value: 'marathi', child: Text("Marathi (मराठी)", style: TextStyle(fontSize: 14))),
-            DropdownMenuItem(value: 'telugu', child: Text("Telugu (తెలుగు)", style: TextStyle(fontSize: 14))),
+            DropdownMenuItem(value: 'english', child: Text("🇬🇧 English", style: TextStyle(color: Color(0xFF1F2937), fontSize: 14, fontWeight: FontWeight.w600))),
+            DropdownMenuItem(value: 'hindi', child: Text("🇮🇳 Hindi (हिंदी)", style: TextStyle(color: Color(0xFF1F2937), fontSize: 14, fontWeight: FontWeight.w600))),
+            DropdownMenuItem(value: 'marathi', child: Text("🇮🇳 Marathi (मराठी)", style: TextStyle(color: Color(0xFF1F2937), fontSize: 14, fontWeight: FontWeight.w600))),
           ],
           onChanged: (val) {
             if (val != null) setState(() => _language = val);
@@ -4571,11 +4570,11 @@ class _FirstTimeSetupWidgetState extends State<_FirstTimeSetupWidget> {
           // Gender Dropdown
           DropdownButtonFormField<String>(
             value: _selectedGender,
-            style: const TextStyle(color: Color(0xFF1F2937)),
+            style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
             dropdownColor: Colors.white,
             decoration: _buildFormInputDecoration("Gender"),
             items: ['Male', 'Female', 'Other'].map((g) {
-              return DropdownMenuItem(value: g, child: Text(g));
+              return DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600)));
             }).toList(),
             onChanged: (val) {
               if (val != null) setState(() => _selectedGender = val);
@@ -4586,11 +4585,11 @@ class _FirstTimeSetupWidgetState extends State<_FirstTimeSetupWidget> {
           // Blood Group Dropdown
           DropdownButtonFormField<String>(
             value: _selectedBlood,
-            style: const TextStyle(color: Color(0xFF1F2937)),
+            style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
             dropdownColor: Colors.white,
             decoration: _buildFormInputDecoration("Blood Group"),
             items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((b) {
-              return DropdownMenuItem(value: b, child: Text(b));
+              return DropdownMenuItem(value: b, child: Text(b, style: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600)));
             }).toList(),
             onChanged: (val) {
               if (val != null) setState(() => _selectedBlood = val);
@@ -4605,7 +4604,7 @@ class _FirstTimeSetupWidgetState extends State<_FirstTimeSetupWidget> {
               controller: _parentPhoneController,
               keyboardType: TextInputType.phone,
               maxLength: 10,
-              style: const TextStyle(color: Color(0xFF1F2937)),
+              style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
               decoration: _buildFormInputDecoration("Parent's Mobile Number (for Login)").copyWith(
                 counterText: "",
                 prefixText: "+91 ",
@@ -4619,7 +4618,7 @@ class _FirstTimeSetupWidgetState extends State<_FirstTimeSetupWidget> {
               controller: _sosPhoneController,
               keyboardType: TextInputType.phone,
               maxLength: 10,
-              style: const TextStyle(color: Color(0xFF1F2937)),
+              style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
               decoration: _buildFormInputDecoration("Caregiver/SOS Contact Number").copyWith(
                 counterText: "",
                 prefixText: "+91 ",
@@ -4631,13 +4630,13 @@ class _FirstTimeSetupWidgetState extends State<_FirstTimeSetupWidget> {
             // Preferred Language
             DropdownButtonFormField<String>(
               value: _selectedLanguage,
-              style: const TextStyle(color: Color(0xFF1F2937)),
+              style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
               dropdownColor: Colors.white,
               decoration: _buildFormInputDecoration("Reminders/App Language"),
               items: const [
-                DropdownMenuItem(value: 'english', child: Text("English")),
-                DropdownMenuItem(value: 'hindi', child: Text("Hindi (हिंदी)")),
-                DropdownMenuItem(value: 'marathi', child: Text("Marathi (मराठी)")),
+                DropdownMenuItem(value: 'english', child: Text("🇬🇧 English", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
+                DropdownMenuItem(value: 'hindi', child: Text("🇮🇳 Hindi (हिंदी)", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
+                DropdownMenuItem(value: 'marathi', child: Text("🇮🇳 Marathi (मराठी)", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
               ],
               onChanged: (val) {
                 if (val != null) setState(() => _selectedLanguage = val);

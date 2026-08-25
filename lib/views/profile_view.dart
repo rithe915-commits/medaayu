@@ -394,15 +394,17 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
               Row(
                 children: [
                   SizedBox(
-                    width: 100,
+                    width: 110,
                     child: DropdownButtonFormField<String>(
                       value: prefixController.text,
+                      style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
+                      dropdownColor: Colors.white,
                       decoration: InputDecoration(
                         labelText: "Prefix",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       items: ['Mr', 'Mrs', 'Ms', 'Dr']
-                          .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                          .map((p) => DropdownMenuItem(value: p, child: Text(p, style: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))))
                           .toList(),
                       onChanged: (val) {
                         if (val != null) prefixController.text = val;
@@ -413,6 +415,7 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   Expanded(
                     child: TextField(
                       controller: nameController,
+                      style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
                       decoration: InputDecoration(
                         labelText: "Full Name *",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -428,6 +431,7 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   Expanded(
                     child: TextField(
                       controller: relController,
+                      style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15),
                       decoration: InputDecoration(
                         labelText: "Relationship",
                         hintText: "e.g. Self, Father, Mother, Spouse",
@@ -439,6 +443,7 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   Expanded(
                     child: TextField(
                       controller: dobController,
+                      style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15),
                       decoration: InputDecoration(
                         labelText: "Date of Birth",
                         hintText: "YYYY-MM-DD",
@@ -456,12 +461,14 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: genderController.text.isNotEmpty ? genderController.text : 'Male',
+                      style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
+                      dropdownColor: Colors.white,
                       decoration: InputDecoration(
                         labelText: "Gender",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       items: ['Male', 'Female', 'Other']
-                          .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                          .map((g) => DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))))
                           .toList(),
                       onChanged: (val) {
                         if (val != null) genderController.text = val;
@@ -472,12 +479,14 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       value: bloodGroupController.text.isNotEmpty ? bloodGroupController.text : 'O+',
+                      style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
+                      dropdownColor: Colors.white,
                       decoration: InputDecoration(
                         labelText: "Blood Group",
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
-                          .map((bg) => DropdownMenuItem(value: bg, child: Text(bg)))
+                          .map((bg) => DropdownMenuItem(value: bg, child: Text(bg, style: const TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))))
                           .toList(),
                       onChanged: (val) {
                         if (val != null) bloodGroupController.text = val;
@@ -568,11 +577,12 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   prefixIcon: const Icon(Icons.language_rounded, color: Color(0xFF3A86F0)),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
+                style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15, fontWeight: FontWeight.w600),
                 dropdownColor: Colors.white,
                 items: const [
-                  DropdownMenuItem(value: "english", child: Text("🇬🇧 English")),
-                  DropdownMenuItem(value: "hindi", child: Text("🇮🇳 हिंदी (Hindi)")),
-                  DropdownMenuItem(value: "marathi", child: Text("🇮🇳 मराठी (Marathi)")),
+                  DropdownMenuItem(value: "english", child: Text("🇬🇧 English", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
+                  DropdownMenuItem(value: "hindi", child: Text("🇮🇳 हिंदी (Hindi)", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
+                  DropdownMenuItem(value: "marathi", child: Text("🇮🇳 मराठी (Marathi)", style: TextStyle(color: Color(0xFF1F2937), fontWeight: FontWeight.w600))),
                 ],
                 onChanged: (val) {
                   if (val != null) selectedLanguage = val;
