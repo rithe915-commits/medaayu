@@ -302,6 +302,15 @@ class DbService extends ChangeNotifier {
     try {
       final json = medicine.toJson();
       Medicine addedMed;
+
+      // Ensure profile exists in Supabase first so foreign key constraint is satisfied
+      try {
+        final profJson = profile.toJson();
+        profJson['id'] = profile.id;
+        await _client.from('profiles').upsert(profJson);
+      } catch (profErr) {
+        debugPrint("Notice: could not upsert profile before adding medicine: $profErr");
+      }
       
       // Try to insert into Supabase first to get the real UUID
       try {
