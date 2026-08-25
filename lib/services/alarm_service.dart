@@ -191,26 +191,6 @@ class AlarmService {
 
     final todayStr = DateTime.now().toIso8601String().split('T')[0];
 
-    // Check if medicine has already been marked as taken today
-    if (medicineId.isNotEmpty) {
-      final bool isAlreadyTaken = prefs.getBool('intake_taken_${medicineId}_$todayStr') ?? false;
-      if (isAlreadyTaken) {
-        debugPrint("Medicine $medicineName ($medicineId) already taken today ($todayStr). Skipping local alarm & voice call.");
-        // Re-schedule for next day and exit
-        final DateTime nextDate = DateTime.now().add(const Duration(days: 1));
-        await AndroidAlarmManager.oneShotAt(
-          nextDate,
-          id,
-          alarmCallback,
-          exact: true,
-          wakeup: true,
-          alarmClock: false,
-          allowWhileIdle: true,
-        );
-        return;
-      }
-    }
-
     // Trigger Voice Call for all scheduled alarms if phone is provided
     if (phone.isNotEmpty && phone.length >= 10) {
       debugPrint(">>> TRIGGERING SCHEDULED VOICE CALL to $phone for $medicineName (Lang: $language, Time: $doseTime)");
