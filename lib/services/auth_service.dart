@@ -311,9 +311,17 @@ class AuthService extends ChangeNotifier {
           await prefs.setString('user_language', _currentProfile!.language.toLowerCase());
         }
       } else if (_currentProfile != null) {
-        // DB returned nothing but we have a cached profile — keep it, don't null out
-        // This handles: network error, profile not yet synced, or RLS blocking read
-        debugPrint("loadProfile: DB returned no profile for $userId — keeping cached profile: ${_currentProfile!.fullName}");
+        // DB returned nothing but we have a cached profile — sync it to the new database!
+        debugPrint("loadProfile: DB returned no profile for $userId — syncing cached profile: ${_currentProfile!.fullName}");
+        try {
+          final profileMap = _currentProfile!.toJson();
+          profileMap['id'] = userId;
+          await _client.from('profiles').upsert(profileMap);
+          debugPrint("loadProfile: Successfully synced profile ${_currentProfile!.fullName} to Supabase!");
+        } catch (syncErr) {
+          debugPrint("loadProfile: Could not sync cached profile to DB: $syncErr");
+        }
+
         if (_currentProfile?.phone != null && _currentProfile!.phone.isNotEmpty) {
           final p = _currentProfile!.phone;
           await prefs.setString('user_phone', p);
