@@ -157,10 +157,7 @@ Deno.serve(async (req) => {
     // 1. Query medicines scheduled for today
     const { data: allMedicines, error: medError } = await supabase
       .from("medicines")
-      .select(`
-        *,
-        profiles!inner(*)
-      `);
+      .select("*");
 
     if (medError) throw medError;
 
@@ -205,10 +202,20 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Fetch matching profiles
+    const profileIds = [...new Set(pendingMedicines.map((m: any) => m.profile_id))];
+    const { data: profilesList } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", profileIds);
+
+    const profileMap = new Map((profilesList || []).map((p: any) => [p.id, p]));
+
     // 2. Group medicines by profile ID
     const profileReminders: Record<string, { profile: any; medicines: any[] }> = {};
     for (const med of pendingMedicines) {
-      const profile = med.profiles;
+      const profile = profileMap.get(med.profile_id);
+      if (!profile) continue;
       const profileId = profile.id;
       if (!profileReminders[profileId]) {
         profileReminders[profileId] = { profile, medicines: [] };
