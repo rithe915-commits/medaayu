@@ -1,0 +1,16 @@
+{
+  "name": "medaayu-backend",
+  "version": "1.0.0",
+  "description": "MedAayu Serverless API & Cron Backend on Vercel",
+  "main": "api/send-reminder.js",
+  "scripts": {
+    "build": "echo 'Build complete'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
