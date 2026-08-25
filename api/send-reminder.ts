@@ -149,8 +149,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ success: true, message: "No reminders for this minute.", time: timeHHMM });
     }
 
+    const todayStr = istDate.toISOString().split('T')[0];
+
+    // Check which medicines have already been called today to prevent duplicate calling
+    const { data: alreadyCalledLogs } = await supabase
+      .from("reminder_logs")
+      .select("medicine_id")
+      .eq("scheduled_date", todayStr)
+      .eq("scheduled_time", timeHHMM)
+      .eq("channel", "voice");
+
+    const calledIds = new Set((alreadyCalledLogs || []).map((l: any) => l.medicine_id));
+
+    // Filter out already called medicines for this time slot
+    const uncalledMedicines = scheduledMedicines.filter((m: any) => !calledIds.has(m.id));
+
+    if (uncalledMedicines.length === 0) {
+      return res.status(200).json({ success: true, message: "Reminders for this minute have already been dispatched.", time: timeHHMM });
+    }
+
     // Fetch corresponding profiles
-    const profileIds = [...new Set(scheduledMedicines.map((m: any) => m.profile_id))];
+    const profileIds = [...new Set(uncalledMedicines.map((m: any) => m.profile_id))];
     const { data: profilesList } = await supabase
       .from("profiles")
       .select("*")
@@ -160,8 +179,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const dialResults = [];
 
-    // Trigger voice calls for all scheduled medicines
-    for (const med of scheduledMedicines) {
+    // Trigger voice calls for uncalled medicines
+    for (const med of uncalledMedicines) {
       const profile = profileMap.get(med.profile_id);
       if (!profile || !profile.phone || profile.phone.length < 10) continue;
 
@@ -198,6 +217,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           },
           body: JSON.stringify(ttsPayload)
         });
+
+        // Log call into reminder_logs to prevent duplicate dialing
+        try {
+          await supabase.from("reminder_logs").insert({
+            profile_id: med.profile_id,
+            medicine_id: med.id,
+            channel: 'voice',
+            status: callRes.ok ? 'sent' : 'failed',
+            scheduled_time: timeHHMM,
+            scheduled_date: todayStr
+          });
+        } catch (_) {}
+
         dialResults.push({ medicine: med.name, phone: formattedPhone, status: callRes.status });
       } catch (err: any) {
         dialResults.push({ medicine: med.name, error: err.message });
