@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedAayu Cloud Backend</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: #059669;
+      color: #ecfdf5;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .endpoints {
+      margin-top: 24px;
+      text-align: left;
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #38bdf8;
+    }
+    .endpoints div {
+      margin-bottom: 8px;
+    }
+    .endpoints div:last-child {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">● Systems Operational</div>
+    <h1>MedAayu Cloud Serverless API</h1>
+    <p>Voice Calling Telephony, SMS OTP Verification, and Gemini AI Care Tips Backend.</p>
+    <div class="endpoints">
+      <div>GET/POST /api/send-reminder</div>
+      <div>POST /api/generate-care-tips</div>
+      <div>POST /api/otp-verify</div>
+    </div>
+  </div>
+</body>
+</html>
