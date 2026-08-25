@@ -131,6 +131,29 @@ class Profile {
       'photo_url': photoUrl,
     };
   }
+    return {
+      'id': id,
+      'owner_id': ownerId,
+      'role': role == UserRole.parent ? 'parent' : 'self',
+      'full_name': fullName,
+      'age': age,
+      'gender': gender,
+      'blood_group': bloodGroup,
+      'phone': phone,
+      'sos_contact_phone': sosContactPhone,
+      'sos_contact_phone_2': sosContactPhone2,
+      'email': email,
+      'plan_tier': planTier == PlanTier.premium 
+          ? 'premium' 
+          : planTier == PlanTier.standard 
+              ? 'standard' 
+              : 'basic',
+      'language': language,
+      'sos_action': sosAction,
+      'plan_expires_at': planExpiresAt?.toIso8601String(),
+      'photo_url': photoUrl,
+    };
+  }
 
   Profile copyWith({
     String? fullName,

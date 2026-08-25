@@ -309,7 +309,11 @@ class DbService extends ChangeNotifier {
         profJson['id'] = profile.id;
         await _client.from('profiles').upsert(profJson);
       } catch (profErr) {
-        debugPrint("Notice: could not upsert profile before adding medicine: $profErr");
+        try {
+          final baseJson = profile.toBaseJson();
+          baseJson['id'] = profile.id;
+          await _client.from('profiles').upsert(baseJson);
+        } catch (_) {}
       }
       
       // Try to insert into Supabase first to get the real UUID

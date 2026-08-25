@@ -319,7 +319,14 @@ class AuthService extends ChangeNotifier {
           await _client.from('profiles').upsert(profileMap);
           debugPrint("loadProfile: Successfully synced profile ${_currentProfile!.fullName} to Supabase!");
         } catch (syncErr) {
-          debugPrint("loadProfile: Could not sync cached profile to DB: $syncErr");
+          try {
+            final baseMap = _currentProfile!.toBaseJson();
+            baseMap['id'] = userId;
+            await _client.from('profiles').upsert(baseMap);
+            debugPrint("loadProfile: Successfully synced profile ${_currentProfile!.fullName} (base fields) to Supabase!");
+          } catch (baseErr) {
+            debugPrint("loadProfile: Could not sync cached profile to DB: $baseErr");
+          }
         }
 
         if (_currentProfile?.phone != null && _currentProfile!.phone.isNotEmpty) {
