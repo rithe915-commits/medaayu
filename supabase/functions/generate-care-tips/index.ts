@@ -11,14 +11,57 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('MY_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? 'https://ysuwnlvmipgfgesdpqdn.supabase.co';
+    const supabaseServiceKey = Deno.env.get('MY_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_ANON_KEY') ?? 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const body = await req.json();
-    const { profileId, profile_id } = body;
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch (_) {}
+
+    const { profileId, profile_id, action } = body;
     const targetProfileId = profileId || profile_id;
+
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
+    const meshApiKey = Deno.env.get('MESH_API_KEY') ?? '';
+
+    // Direct Test Action for Mesh API
+    if (action === 'test_mesh' || action === 'test') {
+      if (!meshApiKey && !geminiApiKey) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: "Neither MESH_API_KEY nor GEMINI_API_KEY secret is configured in Supabase Secrets."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+
+      if (meshApiKey) {
+        const meshRes = await fetch("https://api.meshapi.ai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${meshApiKey}`
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-lite",
+            messages: [
+              { role: "system", content: "You are a helpful assistant." },
+              { role: "user", content: "Say hello from Gemini 2.5 Flash Lite on MedAayu!" }
+            ]
+          })
+        });
+
+        const meshData = await meshRes.json();
+        return new Response(JSON.stringify({
+          success: meshRes.ok,
+          provider: "Mesh API (google/gemini-2.5-flash-lite)",
+          response: meshData
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
+      }
+    }
 
     if (!targetProfileId) {
       return new Response(JSON.stringify({ error: "profileId is required." }), {
@@ -26,6 +69,8 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // 1. Fetch profile
     const { data: profile, error: profileError } = await supabase
