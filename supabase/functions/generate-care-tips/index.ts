@@ -107,9 +107,6 @@ Deno.serve(async (req) => {
       ? medicines.map(m => `- ${m.name} (${m.form}, ${m.frequency}, ${m.food_instruction})`).join("\n")
       : "No active medications.";
 
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') ?? '';
-    const meshApiKey = Deno.env.get('MESH_API_KEY') ?? '';
-
     // 3. Call LLM (Mesh API or Google Gemini API)
     let careTipsText = "";
 
