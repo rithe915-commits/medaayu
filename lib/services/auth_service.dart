@@ -92,11 +92,11 @@ class AuthService extends ChangeNotifier {
 
   // Private helper to invoke otp-verify directly without Authorization header
   Future<dynamic> _invokeOtpVerify(Map<String, dynamic> body) async {
-    final apiKey = _client.rest.headers['apikey'] ?? 'sb_publishable_0LkJnr6s1jWdrCIiHPYoIw_RD-oD73i';
+    final apiKey = _client.rest.headers['apikey'] ?? 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
     try {
       final client = HttpClient();
       final request = await client.postUrl(
-        Uri.parse('https://ttndxxmtetfnwayrjucr.supabase.co/functions/v1/otp-verify'),
+        Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/otp-verify'),
       );
       request.headers.set('content-type', 'application/json');
       request.headers.set('apikey', apiKey);
@@ -451,14 +451,14 @@ class AuthService extends ChangeNotifier {
     String? addonName,
   }) async {
     final recipientName = name ?? _currentProfile?.fullName ?? "User";
-    final apiKey = _client.rest.headers['apikey'] ?? 'sb_publishable_0LkJnr6s1jWdrCIiHPYoIw_RD-oD73i';
+    final apiKey = _client.rest.headers['apikey'] ?? 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
 
     debugPrint("Sending Resend Email ($type) to: $to (API key: ${apiKey.substring(0, 10)}...)");
 
     try {
       final client = HttpClient();
       final request = await client.postUrl(
-        Uri.parse('https://ttndxxmtetfnwayrjucr.supabase.co/functions/v1/send-email'),
+        Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/send-email'),
       );
       request.headers.set('content-type', 'application/json');
       request.headers.set('apikey', apiKey);

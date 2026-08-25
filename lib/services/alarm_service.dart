@@ -263,12 +263,12 @@ class AlarmService {
     final tenDigitPhone = cleanPhone.length > 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
     if (tenDigitPhone.isEmpty || tenDigitPhone.length < 10) return false;
 
-    final anonKey = 'sb_publishable_0LkJnr6s1jWdrCIiHPYoIw_RD-oD73i';
+    final anonKey = 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
 
     try {
       final client = HttpClient();
       final request = await client.postUrl(
-        Uri.parse('https://ttndxxmtetfnwayrjucr.supabase.co/functions/v1/send-reminder'),
+        Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/send-reminder'),
       );
       request.headers.set('content-type', 'application/json');
       request.headers.set('apikey', anonKey);

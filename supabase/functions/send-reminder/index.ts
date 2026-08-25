@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const gonumsWhatsappUrl = Deno.env.get('GONUMS_WHATSAPP_URL') ?? 'https://my.gonums.com/dev/bulkV2';
     const gonumsTemplateName = Deno.env.get('GONUMS_TEMPLATE_NAME') ?? 'medaayu_reminder';
     
-    const ringTtsApiKey = Deno.env.get('RING_TTS_API_KEY') ?? '';
+    const ringTtsApiKey = Deno.env.get('RING_TTS_API_KEY') || '8747441113063529';
     const ringTtsUrl = Deno.env.get('RING_TTS_URL') ?? 'https://tts-api-4-bussinesse-290441563653.asia-south1.run.app/api/tts/send';
 
     // Parse JSON body if present
