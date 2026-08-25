@@ -790,7 +790,19 @@ class DbService extends ChangeNotifier {
   // --- Profile Detail Methods ---
   Future<bool> updateProfileDetails(Profile profile) async {
     try {
-      await _client.from('profiles').update(profile.toJson()).eq('id', profile.id);
+      final json = profile.toJson();
+      json['language'] = profile.language.toLowerCase();
+      await _client.from('profiles').upsert(json);
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_language', profile.language.toLowerCase());
+      await prefs.setString('cached_profile', jsonEncode(json));
+
+      // Reschedule all alarms with the updated language
+      for (final med in _medicines) {
+        await AlarmService.scheduleAlarm(med, profile);
+      }
+
       await loadLinkedParents();
       return true;
     } catch (e) {

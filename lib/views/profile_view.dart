@@ -359,6 +359,7 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
   final stateController = TextEditingController(text: profile.state ?? 'Maharashtra');
   final cityController = TextEditingController(text: profile.city ?? 'Mumbai');
   final addressController = TextEditingController(text: profile.address ?? '');
+  String selectedLanguage = (profile.language.isNotEmpty ? profile.language : 'english').toLowerCase();
 
   showModalBottomSheet(
     context: context,
@@ -558,6 +559,25 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
+              const SizedBox(height: 14),
+
+              DropdownButtonFormField<String>(
+                value: (profile.language.isNotEmpty ? profile.language : 'english').toLowerCase(),
+                decoration: InputDecoration(
+                  labelText: "Preferred Reminder Voice Language *",
+                  prefixIcon: const Icon(Icons.language_rounded, color: Color(0xFF3A86F0)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                dropdownColor: Colors.white,
+                items: const [
+                  DropdownMenuItem(value: "english", child: Text("🇬🇧 English")),
+                  DropdownMenuItem(value: "hindi", child: Text("🇮🇳 हिंदी (Hindi)")),
+                  DropdownMenuItem(value: "marathi", child: Text("🇮🇳 मराठी (Marathi)")),
+                ],
+                onChanged: (val) {
+                  if (val != null) selectedLanguage = val;
+                },
+              ),
               const SizedBox(height: 24),
 
               ElevatedButton(
@@ -571,10 +591,12 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
                     maritalStatus: maritalController.text,
                     bloodGroup: bloodGroupController.text,
                     email: emailController.text.trim(),
+                    phone: phoneController.text.trim(),
                     country: countryController.text.trim(),
                     state: stateController.text.trim(),
                     city: cityController.text.trim(),
                     address: addressController.text.trim(),
+                    language: selectedLanguage,
                   );
 
                   final db = Provider.of<DbService>(context, listen: false);
@@ -582,7 +604,7 @@ void _openEditProfileScreen(BuildContext context, Profile profile) {
 
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Profile details saved successfully!")),
+                    const SnackBar(content: Text("Profile details & Voice Language saved successfully!")),
                   );
                 },
                 style: ElevatedButton.styleFrom(

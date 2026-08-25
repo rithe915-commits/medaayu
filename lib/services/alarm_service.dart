@@ -62,11 +62,16 @@ class AlarmService {
           "";
     }
 
+    final resolvedLang = (profile.language.isNotEmpty
+            ? profile.language
+            : prefs.getString('user_language')) ??
+        'english';
+
     final cacheData = {
       'medicineId': medicine.id,
       'userName': profile.fullName,
       'medicineName': medicine.name,
-      'language': profile.language,
+      'language': resolvedLang.toLowerCase(),
       'foodInstruction': medicine.foodInstruction,
       'planTier': 'premium',
       'phone': targetPhone,
