@@ -83,6 +83,23 @@ class DbService extends ChangeNotifier {
       if (fromDb.isNotEmpty) {
         _medicines = fromDb;
         await _saveLocalMedicines(profileId);
+      } else if (_medicines.isNotEmpty) {
+        // Automatically sync local medicines to Supabase database!
+        for (int i = 0; i < _medicines.length; i++) {
+          final med = _medicines[i];
+          try {
+            final json = med.toJson();
+            if (med.id.isNotEmpty && !med.id.startsWith('local_')) {
+              json['id'] = med.id;
+            }
+            final insertRes = await _client.from('medicines').upsert(json).select().single();
+            _medicines[i] = Medicine.fromJson(insertRes);
+            debugPrint("Synced local medicine ${med.name} to Supabase with ID: ${_medicines[i].id}");
+          } catch (syncErr) {
+            debugPrint("Could not sync medicine ${med.name} to Supabase: $syncErr");
+          }
+        }
+        await _saveLocalMedicines(profileId);
       }
       _setLoading(false);
     } catch (e) {
