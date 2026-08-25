@@ -131,6 +131,8 @@ class Profile {
       'photo_url': photoUrl,
     };
   }
+
+  Map<String, dynamic> toBaseJson() {
     return {
       'id': id,
       'owner_id': ownerId,
