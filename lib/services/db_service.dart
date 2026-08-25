@@ -36,9 +36,16 @@ class DbService extends ChangeNotifier {
     final apiKey = _client.rest.headers['apikey'] ?? 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
     try {
       final client = HttpClient();
-      final request = await client.postUrl(
-        Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/$functionName'),
-      );
+      HttpClientRequest request;
+      try {
+        request = await client.postUrl(
+          Uri.parse('https://medaayufinal.vercel.app/api/$functionName'),
+        );
+      } catch (_) {
+        request = await client.postUrl(
+          Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/$functionName'),
+        );
+      }
       final sessionToken = _client.auth.currentSession?.accessToken ?? apiKey;
       request.headers.set('content-type', 'application/json');
       request.headers.set('apikey', apiKey);

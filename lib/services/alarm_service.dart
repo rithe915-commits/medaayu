@@ -252,9 +252,17 @@ class AlarmService {
 
     try {
       final client = HttpClient();
-      final request = await client.postUrl(
-        Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/send-reminder'),
-      );
+      // Try Vercel fast backend first
+      HttpClientRequest request;
+      try {
+        request = await client.postUrl(
+          Uri.parse('https://medaayufinal.vercel.app/api/send-reminder'),
+        );
+      } catch (_) {
+        request = await client.postUrl(
+          Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/send-reminder'),
+        );
+      }
       request.headers.set('content-type', 'application/json');
       request.headers.set('apikey', anonKey);
       request.headers.set('Authorization', 'Bearer $anonKey');
