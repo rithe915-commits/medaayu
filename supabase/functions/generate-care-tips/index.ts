@@ -86,23 +86,33 @@ RULES:
 
 Provide the output as plain text.`;
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-        const response = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }]
-          })
-        });
+        // Try Gemini 2.5 Flash first, with automatic fallback
+        const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+        for (const model of models) {
+          try {
+            const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+            const response = await fetch(geminiUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [{ text: prompt }]
+                }]
+              })
+            });
 
-        const data = await response.json();
-        const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (generatedText) {
-          careTipsText = generatedText;
-        } else {
-          console.error("Gemini API structure error:", data);
+            if (response.ok) {
+              const data = await response.json();
+              const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (generatedText) {
+                careTipsText = generatedText;
+                console.log(`Care tips successfully generated using ${model}!`);
+                break;
+              }
+            }
+          } catch (modelErr) {
+            console.warn(`Attempt with ${model} failed, trying next fallback:`, modelErr);
+          }
         }
       } catch (err) {
         console.error("Error communicating with Gemini API:", err);
