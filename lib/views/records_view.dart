@@ -51,9 +51,17 @@ class _RecordsViewState extends State<RecordsView> {
   }
 
   @override
+  void didUpdateWidget(RecordsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.profile.id != widget.profile.id) {
+      Provider.of<DbService>(context, listen: false).loadRecords(widget.profile.id);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final db = Provider.of<DbService>(context);
-    final records = db.records;
+    final records = db.records.where((r) => r.profileId == widget.profile.id).toList();
 
     if (_selectedCategory != null) {
       return _CategoryDetailView(
@@ -272,7 +280,7 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<DbService>(context);
-    List<HealthRecord> catRecords = db.records.where((r) => r.category == widget.category.title).toList();
+    List<HealthRecord> catRecords = db.records.where((r) => r.category == widget.category.title && r.profileId == widget.profile.id).toList();
 
     if (_searchQuery.isNotEmpty) {
       catRecords = catRecords.where((r) {

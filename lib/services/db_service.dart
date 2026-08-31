@@ -139,6 +139,7 @@ class DbService extends ChangeNotifier {
   }
 
   Future<void> _loadLocalMedicines(String profileId) async {
+    _medicines = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       final rawJson = prefs.getString('local_medicines_$profileId');
@@ -744,6 +745,7 @@ class DbService extends ChangeNotifier {
   }
 
   Future<void> _loadLocalRecords(String profileId) async {
+    _records = [];
     try {
       final prefs = await SharedPreferences.getInstance();
       final rawJson = prefs.getString('local_health_records_$profileId');
@@ -761,7 +763,7 @@ class DbService extends ChangeNotifier {
     await _loadLocalRecords(profileId);
     notifyListeners();
 
-    // 2. Sync with Supabase cloud if table exists
+    // 2. Sync with Supabase cloud
     try {
       final res = await _client
           .from('health_records')
@@ -769,7 +771,7 @@ class DbService extends ChangeNotifier {
           .eq('profile_id', profileId)
           .order('record_date', ascending: false);
 
-      if (res != null && (res as List).isNotEmpty) {
+      if (res != null) {
         _records = (res as List).map((r) => HealthRecord.fromJson(r)).toList();
         await _saveLocalRecords(profileId);
         notifyListeners();
