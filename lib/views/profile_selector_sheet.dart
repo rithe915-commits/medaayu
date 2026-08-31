@@ -21,10 +21,10 @@ class _ProfileSelectorSheetState extends State<ProfileSelectorSheet> {
     final db = Provider.of<DbService>(context);
     final auth = Provider.of<AuthService>(context);
 
-    // Ensure main self profile and all linked profiles are shown
+    // Ensure main self profile and all linked profiles are always shown
     final List<Profile> allProfiles = [
-      if (auth.currentProfile != null && db.linkedParents.every((p) => p.id != auth.currentProfile!.id))
-        auth.currentProfile!,
+      if (auth.selfProfile != null) auth.selfProfile!,
+      if (auth.currentProfile != null) auth.currentProfile!,
       ...db.linkedParents,
     ];
 

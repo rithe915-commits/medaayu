@@ -13,13 +13,16 @@ class AuthService extends ChangeNotifier {
   String? _phoneNumber; // cached during onboarding OTP
   String? _caregiverName;
 
+  Profile? _selfProfile;
+
   Profile? get currentProfile => _currentProfile;
+  Profile? get selfProfile => _selfProfile;
   bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
   String? get phoneNumber => _phoneNumber;
   String? get caregiverName => _caregiverName;
   bool get isAuthenticated => _currentProfile != null || _client.auth.currentSession != null;
-  String? get currentUserId => _client.auth.currentUser?.id ?? _currentProfile?.id;
+  String? get currentUserId => _client.auth.currentUser?.id ?? _selfProfile?.id ?? _currentProfile?.id;
 
   AuthService() {
     _initAuth();
@@ -29,11 +32,21 @@ class AuthService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       _caregiverName = prefs.getString('caregiver_name');
+
+      final cachedSelfJson = prefs.getString('cached_self_profile');
+      if (cachedSelfJson != null && cachedSelfJson.isNotEmpty) {
+        try {
+          _selfProfile = Profile.fromJson(jsonDecode(cachedSelfJson));
+        } catch (_) {}
+      }
       
       final cachedJson = prefs.getString('cached_profile');
       if (cachedJson != null && cachedJson.isNotEmpty) {
         final Map<String, dynamic> map = jsonDecode(cachedJson);
         _currentProfile = Profile.fromJson(map);
+        if (_currentProfile?.role == UserRole.self) {
+          _selfProfile ??= _currentProfile;
+        }
         debugPrint("Restored cached session profile for: ${_currentProfile?.fullName}");
       }
 
@@ -294,8 +307,10 @@ class AuthService extends ChangeNotifier {
         }
         
         if (_currentProfile!.role == UserRole.self) {
+          _selfProfile = _currentProfile;
           _caregiverName = _currentProfile!.fullName;
           await prefs.setString('caregiver_name', _caregiverName!);
+          await prefs.setString('cached_self_profile', _encodeProfileWithPhoto(res, localPhoto));
         }
 
         // Cache profile locally in SharedPreferences for Widget/Cold Starts
@@ -500,6 +515,15 @@ class AuthService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final localPhoto = prefs.getString('profile_photo_$targetProfileId');
+
+      // Check if switching back to self profile
+      if (_selfProfile != null && targetProfileId == _selfProfile!.id) {
+        _currentProfile = _selfProfile;
+        await prefs.setString('cached_profile', jsonEncode(_selfProfile!.toJson()));
+        _setLoading(false);
+        notifyListeners();
+        return true;
+      }
 
       // Use maybeSingle() so that missing DB rows return null instead of throwing
       final res = await _client
