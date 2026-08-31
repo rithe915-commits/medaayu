@@ -94,17 +94,7 @@ class AlarmService {
 
     debugPrint("Scheduling voice call reminder for ${medicine.name} to $targetPhone at $scheduledDate (ID: $alarmId)");
 
-    // 1. If scheduled within 120 minutes, also register in-app timer fallback
-    final Duration delayDuration = scheduledDate.difference(DateTime.now());
-    if (!delayDuration.isNegative && delayDuration.inMinutes <= 120) {
-      debugPrint("Registering In-App Timer fallback in ${delayDuration.inSeconds}s for $alarmId");
-      Future.delayed(delayDuration, () async {
-        debugPrint("In-App Timer fallback fired for alarm $alarmId!");
-        await alarmCallback(alarmId);
-      });
-    }
-
-    // 2. Schedule AndroidAlarmManager exact alarm with try-catch fallback
+    // Schedule AndroidAlarmManager exact alarm with try-catch fallback
     bool success = false;
     try {
       success = await AndroidAlarmManager.oneShotAt(
@@ -165,7 +155,6 @@ class AlarmService {
     String phone = "";
     String profileId = "";
     String doseTime = "08:00";
-
     String medicineId = "";
 
     if (jsonStr != null) {
@@ -181,6 +170,15 @@ class AlarmService {
       doseTime = cacheData['doseTime'] ?? "08:00";
     }
 
+    // Deduplication check: Do not dial if already dialed in the last 10 minutes
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final lastCallKey = 'last_call_${medicineId.isNotEmpty ? medicineId : id}';
+    final lastCallMs = prefs.getInt(lastCallKey) ?? 0;
+    if (nowMs - lastCallMs < 10 * 60 * 1000) {
+      debugPrint(">>> Skipping duplicate local voice call for $medicineName (dialed within last 10m)");
+      return;
+    }
+
     // Fallback: If phone is missing or short, look up saved caregiver/user phone from SharedPreferences
     if (phone.isEmpty || phone.length < 10) {
       phone = prefs.getString('user_phone') ?? prefs.getString('caregiver_phone') ?? prefs.getString('cached_phone') ?? prefs.getString('registered_phone') ?? "";
@@ -189,10 +187,9 @@ class AlarmService {
       language = prefs.getString('user_language') ?? 'english';
     }
 
-    final todayStr = DateTime.now().toIso8601String().split('T')[0];
-
     // Trigger Voice Call for all scheduled alarms if phone is provided
     if (phone.isNotEmpty && phone.length >= 10) {
+      await prefs.setInt(lastCallKey, nowMs);
       debugPrint(">>> TRIGGERING SCHEDULED VOICE CALL to $phone for $medicineName (Lang: $language, Time: $doseTime)");
       final success = await triggerVoiceCallDirect(
         phone: phone,

@@ -67,6 +67,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const body = req.body || {};
     const { action, phone, userName, medicineName, language, dosage, doseTime } = body;
 
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     // 1. Handle instant manual trigger
     if (action === 'trigger_voice_call' || action === 'test_call') {
       if (!phone) {
@@ -78,6 +80,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const translator = translationMap[lang] || translationMap.english;
       const medVal = medicineName || "Paracetamol 650 mg";
       const dosageVal = dosage || "1 tablet";
+
+      // 5-minute deduplication check to prevent duplicate calls from app + cron
+      if (action === 'trigger_voice_call') {
+        const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        const { data: recentLogs } = await supabase
+          .from("reminder_logs")
+          .select("id")
+          .eq("channel", "voice")
+          .gte("created_at", fiveMinsAgo)
+          .limit(1);
+
+        if (recentLogs && recentLogs.length > 0) {
+          console.log(`[Vercel] Voice call recently sent. Skipping duplicate.`);
+          return res.status(200).json({ success: true, message: "Recently dispatched. Skipped duplicate." });
+        }
+      }
 
       const langCode = languageCodeMap[lang] || "EN";
       const ttsPayload = {
@@ -111,6 +129,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
 
       const responseText = await ttsRes.text();
+
+      // Log dispatch to prevent duplicate calls
+      try {
+        await supabase.from("reminder_logs").insert({
+          profile_id: body.profileId || null,
+          channel: 'voice',
+          status: ttsRes.ok ? 'sent' : 'failed',
+          scheduled_time: doseTime || 'manual',
+          scheduled_date: new Date().toISOString().split('T')[0]
+        });
+      } catch (_) {}
+
       return res.status(200).json({
         success: ttsRes.ok,
         status: ttsRes.status,
