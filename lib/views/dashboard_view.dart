@@ -950,10 +950,6 @@ class _HomeTabState extends State<_HomeTab> {
                       _buildAiTipsCard(context, db),
                       const SizedBox(height: 24),
 
-                      // 7. Health Insights (Future feature space)
-                      _buildHealthInsightsPlaceholder(),
-                      const SizedBox(height: 24),
-
                       // Safety Status
                       if (widget.profile.role == UserRole.self && db.linkedParents.isNotEmpty) ...[
                         Text(
@@ -1408,31 +1404,6 @@ class _HomeTabState extends State<_HomeTab> {
               ],
             );
           }).toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHealthInsightsPlaceholder() {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Icon(Icons.analytics_outlined, color: Colors.blueGrey, size: 22),
-              SizedBox(width: 8),
-              Text(
-                "Health Insights (Future Feature)",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1F2937)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            "Future Feature: Detailed reports on adherence trends, physician notes sync, and family alerts will be available here.",
-            style: TextStyle(fontSize: 13, color: Colors.black45, fontStyle: FontStyle.italic),
-          ),
         ],
       ),
     );
