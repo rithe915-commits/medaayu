@@ -644,148 +644,79 @@ void _openManageProfilesSheet(BuildContext context, Profile currentProfile) {
 }
 
 void _openPlansScreen(BuildContext context, Profile profile) {
-  bool isTestingCall = false;
-  bool testCallSent = false;
-
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (ctx) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setModalState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 24,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 24,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Plans & Features", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-                      IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                  const Text("Plans & Features", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
+                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-                  // Active Plan Card Banner
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF3A86F0), Color(0xFF6C5CE7)]),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
+              // Active Plan Card Banner
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF3A86F0), Color(0xFF6C5CE7)]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.stars_rounded, color: Colors.white, size: 36),
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.stars_rounded, color: Colors.white, size: 36),
-                        const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Standard Plan: VOICE CALLING ACTIVE",
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "Automated Voice Call Reminders for every dose",
-                              style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
-                            ),
-                          ],
+                        const Text(
+                          "Standard Plan: VOICE CALLING ACTIVE",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "Automated Voice Call Reminders for every dose",
+                          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
-                  // Voice Calling Feature Details
-                  _PlanCard(
-                    title: "📞 Medaayu Voice Calling",
-                    price: "Standard Feature",
-                    isCurrent: true,
-                    isRecommended: true,
-                    features: const [
-                      "Automated Voice Call Reminders for every scheduled dose",
-                      "Multi-lingual support (English, Hindi, Marathi)",
-                      "Local device alarms & notifications included",
-                      "Medicine Schedule & Intake Tracking",
-                      "AI Care Tips & Recommendations",
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  if (isTestingCall)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: CircularProgressIndicator(color: Color(0xFF6C5CE7)),
-                      ),
-                    )
-                  else
-                    OutlinedButton.icon(
-                      onPressed: testCallSent
-                          ? null
-                          : () async {
-                              setModalState(() {
-                                isTestingCall = true;
-                              });
-                              final targetPhone = profile.phone.isNotEmpty ? profile.phone : "7620224885";
-                              final ok = await AlarmService.triggerVoiceCallDirect(
-                                phone: targetPhone,
-                                userName: profile.fullName,
-                                medicineName: "Test Reminder Medicine",
-                                language: profile.language,
-                                profileId: profile.id,
-                              );
-                              setModalState(() {
-                                isTestingCall = false;
-                                testCallSent = true;
-                              });
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(ok
-                                        ? "Voice call initiated to $targetPhone!"
-                                        : "Voice call request dispatched. Please wait for ring."),
-                                  ),
-                                );
-                              }
-                            },
-                      icon: Icon(
-                        Icons.phone_callback_rounded,
-                        color: testCallSent ? Colors.black26 : const Color(0xFF6C5CE7),
-                      ),
-                      label: Text(
-                        testCallSent
-                            ? "Voice Call Initiated (Once per Session)"
-                            : "📞 Test Voice Call Now",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: testCallSent ? Colors.black26 : const Color(0xFF6C5CE7),
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        side: BorderSide(
-                          color: testCallSent ? Colors.black12 : const Color(0xFF6C5CE7),
-                          width: 1.5,
-                        ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
+              // Voice Calling Feature Details
+              _PlanCard(
+                title: "📞 Medaayu Voice Calling",
+                price: "Standard Feature",
+                isCurrent: true,
+                isRecommended: true,
+                features: const [
+                  "Automated Voice Call Reminders for every scheduled dose",
+                  "Multi-lingual support (English, Hindi, Marathi)",
+                  "Local device alarms & notifications included",
+                  "Medicine Schedule & Intake Tracking",
+                  "AI Care Tips & Recommendations",
                 ],
               ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       );
     },
   );
