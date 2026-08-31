@@ -59,6 +59,22 @@ class HealthRecord {
     };
   }
 
+  Map<String, dynamic> toDbJson() {
+    final map = <String, dynamic>{
+      'profile_id': profileId,
+      'title': title,
+      'category': category,
+      'doctor_name': doctorName,
+      'record_date': recordDate.toIso8601String().split('T')[0],
+      'date': recordDate.toIso8601String().split('T')[0],
+      'file_url': fileUrl,
+    };
+    if (id.length == 36 && id.contains('-')) {
+      map['id'] = id;
+    }
+    return map;
+  }
+
   HealthRecord copyWith({
     String? title,
     String? category,

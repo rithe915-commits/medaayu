@@ -59,7 +59,7 @@ class Medicine {
       'color': color,
       'photo_url': photoUrl,
     };
-    if (id.isNotEmpty) {
+    if (id.isNotEmpty && id.length == 36 && id.contains('-')) {
       map['id'] = id;
     }
     return map;

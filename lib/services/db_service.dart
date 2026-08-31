@@ -782,18 +782,26 @@ class DbService extends ChangeNotifier {
   }
 
   Future<bool> addRecord(HealthRecord record) async {
-    // Add locally first
-    _records.removeWhere((r) => r.id == record.id);
-    _records.insert(0, record);
-    await _saveLocalRecords(record.profileId);
-    notifyListeners();
+    HealthRecord savedRecord = record;
 
-    // Attempt cloud backup
+    // 1. Attempt cloud insert to get real UUID from Supabase
     try {
-      await _client.from('health_records').insert(record.toJson());
+      final res = await _client
+          .from('health_records')
+          .insert(record.toDbJson())
+          .select()
+          .single();
+      savedRecord = HealthRecord.fromJson(res);
+      debugPrint("Health record successfully saved to Supabase with ID: ${savedRecord.id}");
     } catch (e) {
-      debugPrint("Cloud insert health record error (saved locally): $e");
+      debugPrint("Supabase insert health record error (fallback local): $e");
     }
+
+    // 2. Add to in-memory list & save to local cache
+    _records.removeWhere((r) => r.id == record.id || r.id == savedRecord.id);
+    _records.insert(0, savedRecord);
+    await _saveLocalRecords(savedRecord.profileId);
+    notifyListeners();
     return true;
   }
 
@@ -808,7 +816,7 @@ class DbService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _client.from('health_records').update(record.toJson()).eq('id', record.id);
+      await _client.from('health_records').update(record.toDbJson()).eq('id', record.id);
     } catch (e) {
       debugPrint("Cloud update health record error (updated locally): $e");
     }
