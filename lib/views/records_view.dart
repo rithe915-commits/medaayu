@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:printing/printing.dart';
 import '../models/health_record.dart';
 import '../models/profile.dart';
 import '../services/db_service.dart';
@@ -476,6 +479,7 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
   String selectedCategory = defaultCategory ?? 'Prescriptions';
   DateTime selectedDate = DateTime.now();
   String? pickedFilePath;
+  String pickedFileType = 'image';
 
   final categories = [
     'Prescriptions',
@@ -495,6 +499,8 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
     builder: (ctx) {
       return StatefulBuilder(
         builder: (ctx, setSheetState) {
+          final isPdf = pickedFilePath != null && (pickedFileType == 'pdf' || pickedFilePath!.toLowerCase().endsWith('.pdf'));
+
           return Padding(
             padding: EdgeInsets.only(
               left: 20,
@@ -541,6 +547,7 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                   // Document Title
                   TextField(
                     controller: titleController,
+                    style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15),
                     decoration: InputDecoration(
                       labelText: "Document Title *",
                       hintText: "e.g., Blood Test Report, Dental Prescription",
@@ -552,6 +559,7 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                   // Doctor / Clinic Name
                   TextField(
                     controller: doctorController,
+                    style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15),
                     decoration: InputDecoration(
                       labelText: "Doctor / Clinic Name",
                       hintText: "e.g., Dr. Sharma / City Hospital",
@@ -586,6 +594,7 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                   TextField(
                     controller: notesController,
                     maxLines: 2,
+                    style: const TextStyle(color: Color(0xFF1F2937), fontSize: 15),
                     decoration: InputDecoration(
                       labelText: "Notes / Remarks",
                       hintText: "Add any extra details or instructions...",
@@ -594,38 +603,114 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                   ),
                   const SizedBox(height: 16),
 
-                  // Pick File / Camera
+                  // Attachment Title
+                  const Text(
+                    "Attach Document or Photo",
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Pick File / Camera / PDF Buttons
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
                             final picker = ImagePicker();
-                            final image = await picker.pickImage(source: ImageSource.gallery);
+                            final image = await picker.pickImage(source: ImageSource.camera);
                             if (image != null) {
-                              setSheetState(() => pickedFilePath = image.path);
+                              setSheetState(() {
+                                pickedFilePath = image.path;
+                                pickedFileType = 'image';
+                              });
                             }
                           },
-                          icon: const Icon(Icons.image_rounded),
-                          label: Text(pickedFilePath != null ? "Image Picked ✔" : "Choose File"),
+                          icon: const Icon(Icons.camera_alt_rounded, size: 18),
+                          label: const Text("Camera", style: TextStyle(fontSize: 12)),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
                             final picker = ImagePicker();
-                            final image = await picker.pickImage(source: ImageSource.camera);
+                            final image = await picker.pickImage(source: ImageSource.gallery);
                             if (image != null) {
-                              setSheetState(() => pickedFilePath = image.path);
+                              setSheetState(() {
+                                pickedFilePath = image.path;
+                                pickedFileType = 'image';
+                              });
                             }
                           },
-                          icon: const Icon(Icons.camera_alt_rounded),
-                          label: const Text("Take Photo"),
+                          icon: const Icon(Icons.image_rounded, size: 18),
+                          label: const Text("Gallery", style: TextStyle(fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final result = await FilePicker.platform.pickFiles(
+                              type: FileType.custom,
+                              allowedExtensions: ['pdf', 'doc', 'docx'],
+                            );
+                            if (result != null && result.files.single.path != null) {
+                              setSheetState(() {
+                                pickedFilePath = result.files.single.path;
+                                pickedFileType = 'pdf';
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 18),
+                          label: const Text("PDF / Doc", style: TextStyle(fontSize: 12)),
                         ),
                       ),
                     ],
                   ),
+
+                  // Selected File Preview Card
+                  if (pickedFilePath != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isPdf ? Colors.red.shade50 : const Color(0xFF3A86F0).withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: isPdf ? Colors.red.shade200 : const Color(0xFF3A86F0).withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isPdf ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
+                            color: isPdf ? Colors.red : const Color(0xFF3A86F0),
+                            size: 28,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  pickedFilePath!.split(Platform.pathSeparator).last,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1F2937)),
+                                ),
+                                Text(
+                                  isPdf ? "PDF Document" : "Image File",
+                                  style: TextStyle(fontSize: 11, color: Colors.black.withOpacity(0.5)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18, color: Colors.black54),
+                            onPressed: () => setSheetState(() => pickedFilePath = null),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // Submit Action
@@ -647,7 +732,7 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                         recordDate: selectedDate,
                         notes: notesController.text.trim().isEmpty ? null : notesController.text.trim(),
                         fileUrl: pickedFilePath,
-                        fileType: 'image',
+                        fileType: pickedFileType,
                         createdAt: DateTime.now(),
                       );
 
@@ -656,7 +741,7 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
 
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Record saved successfully! 🎉")),
+                        const SnackBar(content: Text("Record saved to Supabase! 🎉")),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -678,6 +763,8 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
 }
 
 void _showRecordDetails(BuildContext context, HealthRecord record, Profile profile) {
+  final isPdf = record.fileUrl != null && (record.fileType == 'pdf' || record.fileUrl!.toLowerCase().endsWith('.pdf'));
+
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.white,
@@ -732,16 +819,55 @@ void _showRecordDetails(BuildContext context, HealthRecord record, Profile profi
               const SizedBox(height: 16),
             ],
 
+            // Attached File Section (Image or PDF)
             if (record.fileUrl != null && File(record.fileUrl!).existsSync()) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.file(
-                  File(record.fileUrl!),
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+              if (isPdf)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 36),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              record.fileUrl!.split(Platform.pathSeparator).last,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1F2937)),
+                            ),
+                            const Text("PDF Document", style: TextStyle(fontSize: 12, color: Colors.black54)),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.print_rounded, color: Color(0xFF3A86F0)),
+                        tooltip: "Print / View PDF",
+                        onPressed: () async {
+                          final bytes = await File(record.fileUrl!).readAsBytes();
+                          await Printing.layoutPdf(onLayout: (_) => bytes);
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.file(
+                    File(record.fileUrl!),
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
               const SizedBox(height: 16),
             ],
 
@@ -754,7 +880,7 @@ void _showRecordDetails(BuildContext context, HealthRecord record, Profile profi
                       _shareRecord(context, record);
                     },
                     icon: const Icon(Icons.share_rounded),
-                    label: const Text("Share"),
+                    label: const Text("Share Record & File"),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -786,41 +912,34 @@ void _showRecordDetails(BuildContext context, HealthRecord record, Profile profi
   );
 }
 
-void _shareRecord(BuildContext context, HealthRecord record) {
-  showDialog(
-    context: context,
-    builder: (ctx) {
-      return AlertDialog(
-        title: const Text("Share Health Record"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Secure summary copy:"),
-            const SizedBox(height: 10),
-            SelectableText(
-              "📄 *MedAayu Record*\nTitle: ${record.title}\nCategory: ${record.category}\nDoctor: ${record.doctorName ?? 'N/A'}\nDate: ${record.recordDate.day}/${record.recordDate.month}/${record.recordDate.year}\nNotes: ${record.notes ?? 'None'}",
-              style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Close"),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Record details copied to clipboard!")),
-              );
-            },
-            icon: const Icon(Icons.copy_rounded),
-            label: const Text("Copy Text"),
-          ),
-        ],
+void _shareRecord(BuildContext context, HealthRecord record) async {
+  final summary = "📄 *MedAayu Health Record*\n\n"
+      "📌 *Title:* ${record.title}\n"
+      "📂 *Category:* ${record.category}\n"
+      "👨‍⚕️ *Doctor/Clinic:* ${record.doctorName ?? 'N/A'}\n"
+      "📅 *Date:* ${record.recordDate.day}/${record.recordDate.month}/${record.recordDate.year}\n"
+      "${record.notes != null && record.notes!.isNotEmpty ? '📝 *Notes:* ${record.notes}\n' : ''}\n"
+      "Shared securely via MedAayu Elder Care 🩺";
+
+  try {
+    if (record.fileUrl != null && File(record.fileUrl!).existsSync()) {
+      await Share.shareXFiles(
+        [XFile(record.fileUrl!)],
+        text: summary,
+        subject: "Health Record: ${record.title}",
       );
-    },
-  );
+    } else {
+      await Share.share(
+        summary,
+        subject: "Health Record: ${record.title}",
+      );
+    }
+  } catch (e) {
+    debugPrint("Share record error: $e");
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Could not share: $e")),
+      );
+    }
+  }
 }
