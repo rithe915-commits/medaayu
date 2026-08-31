@@ -650,13 +650,13 @@ void _openUploadSheet(BuildContext context, Profile profile, String? defaultCate
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () async {
-                            final result = await FilePicker.platform.pickFiles(
+                            final files = await FilePicker.pickFiles(
                               type: FileType.custom,
                               allowedExtensions: ['pdf', 'doc', 'docx'],
                             );
-                            if (result != null && result.files.single.path != null) {
+                            if (files.isNotEmpty && files.first.path != null) {
                               setSheetState(() {
-                                pickedFilePath = result.files.single.path;
+                                pickedFilePath = files.first.path;
                                 pickedFileType = 'pdf';
                               });
                             }
