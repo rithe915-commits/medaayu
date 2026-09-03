@@ -6,6 +6,7 @@ import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/db_service.dart';
 import 'add_profile_sheet.dart';
+import '../widgets/delete_with_otp_dialog.dart';
 
 class ProfileSelectorSheet extends StatefulWidget {
   final Profile currentProfile;
@@ -431,42 +432,17 @@ class _ProfileSelectorSheetState extends State<ProfileSelectorSheet> {
     );
   }
 
-  // Delete Profile Confirmation
+  // Delete Profile Confirmation with OTP Verification
   void _confirmDeleteProfile(BuildContext context, Profile p) {
-    showDialog(
+    DeleteWithOtpDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Delete Profile"),
-        content: Text("Are you sure you want to remove ${p.fullName}'s profile and medicine schedules?"),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final db = Provider.of<DbService>(context, listen: false);
-              final auth = Provider.of<AuthService>(context, listen: false);
-
-              await db.deleteProfile(p.id);
-
-              if (widget.currentProfile.id == p.id) {
-                final selfProf = db.linkedParents.firstWhere(
-                  (element) => element.role == UserRole.self,
-                  orElse: () => auth.currentProfile!,
-                );
-                await auth.switchProfile(selfProf.id);
-              }
-
-              setState(() {});
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Profile deleted successfully.")),
-              );
-            },
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
+      profileToDelete: p,
+      isAccountOwner: p.role == UserRole.self,
+      onDeleted: () {
+        if (mounted) {
+          setState(() {});
+        }
+      },
     );
   }
 

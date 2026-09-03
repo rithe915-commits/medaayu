@@ -193,6 +193,39 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  // Send OTP for confirming account or profile deletion
+  Future<bool> sendDeletionOtp(String phone) async {
+    try {
+      final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final tenDigit = clean.length > 10 ? clean.substring(clean.length - 10) : clean;
+      final data = await _invokeOtpVerify({
+        'action': 'send',
+        'phone': tenDigit,
+      });
+      return data != null && data['success'] == true;
+    } catch (e) {
+      debugPrint("Error sending deletion OTP: $e");
+      return false;
+    }
+  }
+
+  // Verify OTP for confirming account or profile deletion
+  Future<bool> verifyDeletionOtp(String phone, String code) async {
+    try {
+      final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final tenDigit = clean.length > 10 ? clean.substring(clean.length - 10) : clean;
+      final data = await _invokeOtpVerify({
+        'action': 'verify',
+        'phone': tenDigit,
+        'code': code.trim(),
+      });
+      return data != null && data['success'] == true && data['verified'] == true;
+    } catch (e) {
+      debugPrint("Error verifying deletion OTP: $e");
+      return false;
+    }
+  }
+
   // Trigger Verify OTP Edge Function (Bulk Blaster Verification)
   Future<String?> verifyOtp(String code) async {
     if (_phoneNumber == null) return "Mobile number missing. Please go back and re-enter phone number.";
@@ -471,6 +504,23 @@ class AuthService extends ChangeNotifier {
       _setLoading(false);
       return false;
     }
+  }
+
+  // Update care tips on current and self profiles
+  void updateCareTips(String profileId, String tips) {
+    if (_currentProfile?.id == profileId) {
+      _currentProfile = _currentProfile!.copyWith(
+        careTips: tips,
+        careTipsUpdatedAt: DateTime.now(),
+      );
+    }
+    if (_selfProfile?.id == profileId) {
+      _selfProfile = _selfProfile!.copyWith(
+        careTips: tips,
+        careTipsUpdatedAt: DateTime.now(),
+      );
+    }
+    notifyListeners();
   }
 
   // Dispatch Transactional Email via Resend Edge Function

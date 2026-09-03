@@ -12,10 +12,11 @@ import '../services/billing_service.dart';
 import '../services/ocr_service.dart';
 import '../services/translation.dart';
 import '../theme/design_system.dart';
+import 'profile_selector_sheet.dart';
 import 'records_view.dart';
 import 'profile_view.dart';
 import 'add_profile_sheet.dart';
-import 'profile_selector_sheet.dart';
+import '../widgets/delete_with_otp_dialog.dart';
 import '../services/invoice_service.dart';
 
 String _formatTimeString(String rawTime) {
@@ -1274,6 +1275,81 @@ class _HomeTabState extends State<_HomeTab> {
       }
     }
 
+    // Fallback localized tips if AI has not generated yet
+    if (parsedTips.isEmpty) {
+      final lang = (widget.profile.language).toLowerCase();
+      if (lang == 'hindi') {
+        parsedTips.addAll([
+          {
+            'index': '1',
+            'title': '💧 नियमित जलपान (Stay Hydrated)',
+            'description': 'दिन भर में 6-8 गिलास पानी अवश्य पिएं। यह दवा के अवशोषण और ऊर्जा के लिए जरूरी है।',
+          },
+          {
+            'index': '2',
+            'title': '🚶 हल्की सैर व गतिशीलता (Mobility)',
+            'description': 'रोजाना 15 मिनट की हल्की सैर या आसान स्ट्रेचिंग करें। जोड़ों के लचीलेपन में मदद मिलती है।',
+          },
+          {
+            'index': '3',
+            'title': '🥗 संतुलित आहार (Balanced Nutrition)',
+            'description': 'समय पर पौष्टिक भोजन लें और भारी या अत्यधिक तैलीय भोजन से बचें।',
+          },
+        ]);
+      } else if (lang == 'marathi') {
+        parsedTips.addAll([
+          {
+            'index': '1',
+            'title': '💧 नियमित पाणी प्या (Stay Hydrated)',
+            'description': 'दिवसभरात पुरेसे पाणी प्यावे. यामुळे शरीर ताजेतवाने राहते व पचन सुधारते.',
+          },
+          {
+            'index': '2',
+            'title': '🚶 हलकी हालचाल (Mobility)',
+            'description': 'दररोज १५ मिनिटे हलके चालणे किंवा स्ट्रेचिंग करा. यामुळे सांधे निरोगी राहतात.',
+          },
+          {
+            'index': '3',
+            'title': '🥗 पौष्टिक आहार (Balanced Diet)',
+            'description': 'वेळेवर सात्विक व ताजा आहार घ्यावा. जेवणानंतर लगेच झोपणे टाळावे.',
+          },
+        ]);
+      } else {
+        parsedTips.addAll([
+          {
+            'index': '1',
+            'title': '💧 Stay Well Hydrated',
+            'description': 'Drink 6–8 glasses of water throughout the day to support circulation and energy.',
+          },
+          {
+            'index': '2',
+            'title': '🚶 Light Movement & Walking',
+            'description': 'Take a gentle 15-minute walk or light stretching daily to maintain joint mobility and balance.',
+          },
+          {
+            'index': '3',
+            'title': '🥗 Balanced Nutrition & Sleep',
+            'description': 'Maintain consistent meal timings and ensure 7–8 hours of restful, peaceful sleep.',
+          },
+        ]);
+      }
+    }
+
+    // Check today's medicine intake status
+    final today = DateTime.now();
+    final todayActiveMeds = db.medicines.where((med) {
+      final started = med.startDate.isBefore(today) || _isSameDay(med.startDate, today);
+      final notEnded = med.endDate == null || med.endDate!.isAfter(today) || _isSameDay(med.endDate!, today);
+      return started && notEnded;
+    }).toList();
+
+    final untakenMeds = todayActiveMeds.where((med) {
+      return !db.intakeLogs.any((log) {
+        final takenAt = DateTime.tryParse(log['taken_at'] ?? '') ?? DateTime.now();
+        return _isSameDay(takenAt, today) && log['medicine_id'] == med.id;
+      });
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1288,14 +1364,120 @@ class _HomeTabState extends State<_HomeTab> {
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.refresh_rounded, color: Color(0xFF3A86F0)),
+              tooltip: "Regenerate AI Tips",
               onPressed: isLoading ? null : () async {
-                await db.triggerCareTipsRegen(widget.profile.id);
+                final newTips = await db.triggerCareTipsRegen(widget.profile.id, widget.profile);
+                if (newTips != null) {
+                  auth.updateCareTips(widget.profile.id, newTips);
+                }
                 await auth.switchProfile(widget.profile.id);
               },
             ),
           ],
         ),
         const SizedBox(height: 8),
+
+        // Minimal Health Message Banner (untaken vs taken vs general)
+        if (untakenMeds.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED), // Warm amber
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFDBA74).withOpacity(0.6)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.access_time_rounded, color: Color(0xFFEA580C), size: 22),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${untakenMeds.length} Dose(s) Pending • Take With Care",
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF9A3412)),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Remember to take '${untakenMeds.first.name}' on time with plenty of water. Consistent timing maintains steady relief.",
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF7C2D12), height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          )
+        else if (todayActiveMeds.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4), // Fresh green
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF86EFAC).withOpacity(0.6)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.check_circle_outline_rounded, color: Color(0xFF16A34A), size: 22),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "All Today's Medicines Taken! 🌟",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF15803D)),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "Excellent adherence! Continue staying well-hydrated, take light walks, and have a restful evening.",
+                        style: TextStyle(fontSize: 12, color: Color(0xFF166534), height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F9FF), // Fresh blue
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFBAE6FD)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.favorite_outline_rounded, color: Color(0xFF0284C7), size: 22),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Daily Wellness Note 🌿",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0369A1)),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        "Drink 6-8 glasses of water today, perform light stretching, and get at least 7 hours of peaceful sleep.",
+                        style: TextStyle(fontSize: 12, color: Color(0xFF075985), height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         if (widget.profile.careTipsUpdatedAt != null) ...[
           Padding(
             padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
@@ -1305,6 +1487,7 @@ class _HomeTabState extends State<_HomeTab> {
             ),
           ),
         ],
+
         if (isLoading)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -1316,23 +1499,7 @@ class _HomeTabState extends State<_HomeTab> {
               ],
             ),
           )
-        else if (parsedTips.isEmpty) ...[
-          EmptyStateWidget(
-            title: "No health tips yet",
-            subtitle: db.medicines.isEmpty 
-                ? "Add medicines to receive personalized AI health tips."
-                : "Tips are ready to be generated for your medicines.",
-            onActionPressed: () async {
-              if (db.medicines.isEmpty) {
-                // Switch tab or trigger add medicine sheet
-              } else {
-                await db.triggerCareTipsRegen(widget.profile.id);
-                await auth.switchProfile(widget.profile.id);
-              }
-            },
-            buttonText: db.medicines.isEmpty ? "Add Medicine" : "Generate Tips",
-          ),
-        ] else
+        else
           ...parsedTips.map((tip) {
             final parsedTitle = getTipTitle(tip['index']!, tip['title']!, tip['description']!);
             return ExpandableTipCard(
@@ -3777,47 +3944,14 @@ class _ManageTabState extends State<_ManageTab> {
                   onPressed: () => _openEditParentPhoneDialog(context, db, parent),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                  tooltip: "Delete",
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
+                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                  tooltip: "Delete Profile",
+                  onPressed: () {
+                    DeleteWithOtpDialog.show(
                       context: context,
-                      builder: (ctx) => AlertDialog(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        title: const Text("Delete Profile?", style: TextStyle(fontWeight: FontWeight.bold)),
-                        content: Text("Are you sure you want to permanently delete the profile for ${parent.fullName}? This will erase all medicines and history. This action is irreversible."),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text("Cancel", style: TextStyle(color: Colors.black45)),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                            child: const Text("Delete"),
-                          ),
-                        ],
-                      ),
+                      profileToDelete: parent,
+                      isAccountOwner: false,
                     );
-
-                    if (confirm == true) {
-                      if (widget.profile.id == parent.id) {
-                        final primaryId = widget.profile.role == UserRole.parent ? widget.profile.ownerId : widget.profile.id;
-                        if (primaryId != null) {
-                          await auth.switchProfile(primaryId);
-                        }
-                      }
-                      
-                      final ok = await db.deleteProfile(parent.id);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(ok ? "✅ Profile deleted successfully" : "❌ Failed to delete profile"),
-                          backgroundColor: ok ? const Color(0xFF2E7D32) : Colors.redAccent,
-                          behavior: SnackBarBehavior.floating,
-                        ));
-                      }
-                    }
                   },
                 ),
               ],
@@ -3935,26 +4069,12 @@ class _ManageTabState extends State<_ManageTab> {
               iconColor: Colors.redAccent,
               title: "Delete Account",
               textColor: Colors.redAccent,
-              onTap: () async {
-                final confirm = await showDialog<bool>(
+              onTap: () {
+                DeleteWithOtpDialog.show(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text("Delete Account?"),
-                    content: const Text("Are you sure you want to permanently delete your account? This will erase all profiles and medicines. This action is irreversible."),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-                        child: const Text("Delete"),
-                      ),
-                    ],
-                  ),
+                  profileToDelete: widget.profile,
+                  isAccountOwner: true,
                 );
-                if (confirm == true) {
-                  await db.deleteProfile(widget.profile.id);
-                  await auth.signOut();
-                }
               },
               trailing: const SizedBox(),
             ),

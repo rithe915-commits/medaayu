@@ -10,6 +10,7 @@ import '../services/invoice_service.dart';
 import '../services/alarm_service.dart';
 import 'add_profile_sheet.dart';
 import 'profile_selector_sheet.dart';
+import '../widgets/delete_with_otp_dialog.dart';
 import '../theme/design_system.dart';
 
 class ProfileView extends StatefulWidget {
@@ -216,32 +217,18 @@ class _ProfileViewState extends State<ProfileView> {
             const SizedBox(height: 12),
 
             TextButton.icon(
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
+              onPressed: () {
+                DeleteWithOtpDialog.show(
                   context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text("Delete Account"),
-                    content: const Text(
-                      "This action is permanent and will remove all profile data, medicine schedules, and health records.",
-                    ),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text("Delete Forever"),
-                      ),
-                    ],
-                  ),
+                  profileToDelete: widget.profile,
+                  isAccountOwner: widget.profile.role == UserRole.self,
                 );
-
-                if (confirm == true) {
-                  await db.deleteProfile(widget.profile.id);
-                  await auth.signOut();
-                }
               },
               icon: const Icon(Icons.delete_forever_rounded, color: Colors.black45, size: 20),
-              label: const Text("Delete Account", style: TextStyle(color: Colors.black45, fontSize: 13)),
+              label: Text(
+                widget.profile.role == UserRole.self ? "Delete Account" : "Delete This Profile",
+                style: const TextStyle(color: Colors.black45, fontSize: 13),
+              ),
             ),
             const SizedBox(height: 30),
           ],

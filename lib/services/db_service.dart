@@ -703,33 +703,124 @@ class DbService extends ChangeNotifier {
   }
 
   // Trigger manual Care Tips generation via Edge Function
-  Future<void> triggerCareTipsRegen(String profileId) async {
+  Future<String?> triggerCareTipsRegen(String profileId, [Profile? currentProf]) async {
     _setLoading(true);
     try {
-      await _invokeEdgeFunction('generate-care-tips', {'profileId': profileId});
+      final prof = currentProf ?? _linkedParents.cast<Profile?>().firstWhere(
+            (p) => p?.id == profileId,
+            orElse: () => null,
+          );
+      final res = await _invokeEdgeFunction('generate-care-tips', {
+        'profileId': profileId,
+        'fullName': prof?.fullName,
+        'language': prof?.language ?? 'english',
+        'age': prof?.age,
+        'gender': prof?.gender,
+        'medicines': _medicines.where((m) => m.profileId == profileId).map((m) => m.toJson()).toList(),
+      });
+
+      if (res != null && res['care_tips'] != null) {
+        final tips = res['care_tips'].toString();
+        // Update cache locally
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('cached_care_tips_$profileId', tips);
+        await prefs.setString('cached_care_tips_time_$profileId', DateTime.now().toIso8601String());
+
+        // Update in-memory linked parents
+        final pIdx = _linkedParents.indexWhere((p) => p.id == profileId);
+        if (pIdx != -1) {
+          _linkedParents[pIdx] = _linkedParents[pIdx].copyWith(
+            careTips: tips,
+            careTipsUpdatedAt: DateTime.now(),
+          );
+        }
+        notifyListeners();
+        return tips;
+      }
     } catch (e) {
       debugPrint("Error triggering care tips: $e");
     } finally {
       _setLoading(false);
+      notifyListeners();
     }
+    return null;
   }
 
-  // Delete profile
+  // Permanently delete a profile and all its associated data (medicines, health records, logs, alarms)
   Future<bool> deleteProfile(String profileId) async {
     _setLoading(true);
     try {
-      await _invokeEdgeFunction(
-        'manage-parent',
-        {
-          'action': 'delete',
-          'profileId': profileId,
-        },
-      );
+      debugPrint(">>> Permanently deleting profile $profileId and all its data...");
+
+      // 1. Fetch all medicines for this profile to cancel device alarms and delete intake logs
+      try {
+        final medRows = await _client.from('medicines').select().eq('profile_id', profileId);
+        final medList = (medRows as List).map((m) => Medicine.fromJson(m)).toList();
+        
+        for (final med in medList) {
+          try {
+            await AlarmService.cancelAlarm(med);
+          } catch (_) {}
+          try {
+            await _client.from('intake_logs').delete().eq('medicine_id', med.id);
+          } catch (_) {}
+        }
+      } catch (e) {
+        debugPrint("Notice while cancelling alarms or removing intake logs: $e");
+      }
+
+      // 2. Delete all medicines for this profile
+      try {
+        await _client.from('medicines').delete().eq('profile_id', profileId);
+      } catch (e) {
+        debugPrint("Notice deleting medicines: $e");
+      }
+
+      // 3. Delete all health records for this profile
+      try {
+        await _client.from('health_records').delete().eq('profile_id', profileId);
+      } catch (e) {
+        debugPrint("Notice deleting health_records: $e");
+      }
+
+      // 4. Delete reminder logs for this profile
+      try {
+        await _client.from('reminder_logs').delete().eq('profile_id', profileId);
+      } catch (e) {
+        debugPrint("Notice deleting reminder_logs: $e");
+      }
+
+      // 5. Delete profile from profiles table
+      try {
+        await _client.from('profiles').delete().eq('id', profileId);
+      } catch (e) {
+        debugPrint("Notice deleting from profiles table: $e");
+      }
+
+      // 6. Clear all local SharedPreferences storage for this profile
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('local_medicines_$profileId');
+        await prefs.remove('local_health_records_$profileId');
+        await prefs.remove('cached_profile_$profileId');
+        await prefs.remove('profile_photo_$profileId');
+      } catch (_) {}
+
+      // 7. Update in-memory lists
+      _linkedParents.removeWhere((p) => p.id == profileId);
+      if (_medicines.any((m) => m.profileId == profileId)) {
+        _medicines.removeWhere((m) => m.profileId == profileId);
+      }
+      if (_records.any((r) => r.profileId == profileId)) {
+        _records.removeWhere((r) => r.profileId == profileId);
+      }
+
       await loadLinkedParents();
       _setLoading(false);
+      notifyListeners();
       return true;
     } catch (e) {
-      debugPrint("Error deleting profile: $e");
+      debugPrint("Error permanently deleting profile: $e");
       _setLoading(false);
       return false;
     }

@@ -51,32 +51,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 1. Fetch profile
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", targetProfileId)
-      .maybeSingle();
+    let profile: any = null;
+    try {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", targetProfileId)
+        .maybeSingle();
+      profile = prof;
+    } catch (_) {}
 
-    if (profileError) throw profileError;
-    if (!profile) {
-      return res.status(200).json({ success: false, message: "Profile not found, skipped." });
-    }
+    const profileName = profile?.full_name || body.fullName || body.name || "User";
+    const userLang = (profile?.language || body.language || 'english').toLowerCase();
+    const profileAge = profile?.age ?? body.age ?? 'Not specified';
+    const profileGender = profile?.gender ?? body.gender ?? 'Not specified';
 
     // 2. Fetch medicines
-    const { data: medicines } = await supabase
-      .from("medicines")
-      .select("*")
-      .eq("profile_id", targetProfileId);
+    let medicines: any[] = [];
+    try {
+      const { data: meds } = await supabase
+        .from("medicines")
+        .select("*")
+        .eq("profile_id", targetProfileId);
+      medicines = meds || [];
+    } catch (_) {}
+
+    if (medicines.length === 0 && Array.isArray(body.medicines)) {
+      medicines = body.medicines;
+    }
 
     const medString = (medicines && medicines.length > 0)
-      ? medicines.map((m: any) => `- ${m.name} (${m.form}, ${m.frequency}, ${m.food_instruction})`).join("\n")
+      ? medicines.map((m: any) => `- ${m.name || m.medicineName} (${m.form || 'tablet'}, ${m.frequency || 'daily'}, ${m.food_instruction || m.foodInstruction || 'after_food'})`).join("\n")
       : "No active medications.";
-
-    const userLang = (profile.language || 'english').toLowerCase();
     const prompt = `You are a professional elder-care assistant. Write 3 short wellness tips for:
-Name: ${profile.full_name}
-Age: ${profile.age ?? 'Not specified'}
-Gender: ${profile.gender ?? 'Not specified'}
+Name: ${profileName}
+Age: ${profileAge}
+Gender: ${profileGender}
 Active Medications:
 ${medString}
 
@@ -130,14 +140,18 @@ Provide the output as plain text.`;
       careTipsText = fallbackTipsMap[userLang] || fallbackTipsMap.english;
     }
 
-    // Save to profile
-    await supabase
-      .from("profiles")
-      .update({
-        care_tips: careTipsText,
-        care_tips_updated_at: new Date().toISOString()
-      })
-      .eq("id", targetProfileId);
+    // Save to profile if exists
+    if (profile) {
+      try {
+        await supabase
+          .from("profiles")
+          .update({
+            care_tips: careTipsText,
+            care_tips_updated_at: new Date().toISOString()
+          })
+          .eq("id", targetProfileId);
+      } catch (_) {}
+    }
 
     return res.status(200).json({
       success: true,
