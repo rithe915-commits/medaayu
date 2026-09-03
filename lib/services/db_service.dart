@@ -526,6 +526,7 @@ class DbService extends ChangeNotifier {
         try {
           await _client.from('intake_logs').insert({
             'medicine_id': medicineId,
+            'status': 'taken',
             'taken_at': takenAt.toUtc().toIso8601String(),
           });
         } catch (dbErr) {
@@ -670,6 +671,7 @@ class DbService extends ChangeNotifier {
         final takenAt = DateTime(date.year, date.month, date.day, now.hour, now.minute, now.second);
         await _client.from('intake_logs').insert({
           'medicine_id': medicineId,
+          'status': 'taken',
           'taken_at': takenAt.toUtc().toIso8601String(),
         });
         await prefs.setBool('intake_taken_${medicineId}_$dateStr', true);

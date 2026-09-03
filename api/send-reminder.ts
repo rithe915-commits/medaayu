@@ -194,12 +194,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Filter out already called medicines for this time slot
     const uncalledMedicines = scheduledMedicines.filter((m: any) => !calledIds.has(m.id));
 
-    if (uncalledMedicines.length === 0) {
-      return res.status(200).json({ success: true, message: "Reminders for this minute have already been dispatched.", time: timeHHMM });
+    // Query intake_logs for today to skip medicines already marked as taken
+    const startOfDayIst = new Date(istDate.getFullYear(), istDate.getMonth(), istDate.getDate(), 0, 0, 0);
+    const startOfDayUtc = new Date(startOfDayIst.getTime() - (3600000 * 5.5)).toISOString();
+
+    const { data: todayIntakes } = await supabase
+      .from("intake_logs")
+      .select("medicine_id, status, taken_at")
+      .eq("status", "taken")
+      .gte("taken_at", startOfDayUtc);
+
+    const takenMedicineIds = new Set((todayIntakes || []).map((l: any) => l.medicine_id));
+
+    // Filter out medicines already marked as taken for today
+    const medicinesToCall = uncalledMedicines.filter((m: any) => {
+      if (takenMedicineIds.has(m.id)) {
+        console.log(`[Vercel Cron] Medicine '${m.name}' (${m.id}) already marked as TAKEN today at ${timeHHMM}. Skipping voice call!`);
+        return false;
+      }
+      return true;
+    });
+
+    if (medicinesToCall.length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        message: "All reminders for this minute have already been dispatched or marked as taken.", 
+        time: timeHHMM 
+      });
     }
 
     // Fetch corresponding profiles
-    const profileIds = [...new Set(uncalledMedicines.map((m: any) => m.profile_id))];
+    const profileIds = [...new Set(medicinesToCall.map((m: any) => m.profile_id))];
     const { data: profilesList } = await supabase
       .from("profiles")
       .select("*")
@@ -209,8 +234,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const dialResults = [];
 
-    // Trigger voice calls for uncalled medicines
-    for (const med of uncalledMedicines) {
+    // Trigger voice calls for medicines that need reminders
+    for (const med of medicinesToCall) {
       const profile = profileMap.get(med.profile_id);
       if (!profile || !profile.phone || profile.phone.length < 10) continue;
 

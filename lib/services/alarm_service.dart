@@ -170,6 +170,15 @@ class AlarmService {
       doseTime = cacheData['doseTime'] ?? "08:00";
     }
 
+    // Check if medicine is already marked as taken today
+    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+    final isAlreadyTaken = (prefs.getBool('intake_taken_${medicineId}_$todayStr') ?? false) ||
+                           (prefs.getBool('intake_taken_${medicineId}_${todayStr}_$doseTime') ?? false);
+    if (isAlreadyTaken) {
+      debugPrint(">>> Medicine '$medicineName' ($medicineId) is ALREADY MARKED AS TAKEN for today ($doseTime). Skipping voice call reminder!");
+      return;
+    }
+
     // Deduplication check: Do not dial if already dialed in the last 10 minutes
     final nowMs = DateTime.now().millisecondsSinceEpoch;
     final lastCallKey = 'last_call_${medicineId.isNotEmpty ? medicineId : id}';
