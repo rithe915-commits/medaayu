@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -70,8 +70,10 @@ class _DeleteWithOtpDialogState extends State<DeleteWithOtpDialog> {
       p = prefs.getString('registered_phone') ??
           prefs.getString('user_phone') ??
           prefs.getString('caregiver_phone') ??
-          widget.profileToDelete.phone ??
           "";
+      if (p.isEmpty && widget.profileToDelete.phone != null) {
+        p = widget.profileToDelete.phone!;
+      }
     }
     final clean = p.replaceAll(RegExp(r'[^0-9]'), '');
     setState(() {
@@ -103,7 +105,7 @@ class _DeleteWithOtpDialogState extends State<DeleteWithOtpDialog> {
     });
 
     final auth = Provider.of<AuthService>(context, listen: false);
-    final sent = await auth.sendDeletionOtp(_phone);
+    await auth.sendDeletionOtp(_phone);
 
     setState(() {
       _isLoading = false;
