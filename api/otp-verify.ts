@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const supabaseUrl = process.env.SUPABASE_URL || 'https://uljezfuiipfnlmggktyp.supabase.co';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsamV6ZnVpaXBmbmxtZ2drdHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNjA4NDgsImV4cCI6MjExMDczNjg0OH0.xtlfubw5-sStd8aSrlEhAIG8Bvj6-8vuZHRktWrHjog';
-    const bulkBlasterApiKey = process.env.BULK_BLASTER_API_KEY || '';
+    const bulkBlasterApiKey = process.env.BULKBLASTER_API_KEY || process.env.BULK_BLASTER_API_KEY || 'bb_isYwVOkSohuApW0p4heWYVtbzijLcaGu';
 
     const body = req.body || {};
     const { action, phone, code } = body;
@@ -37,10 +37,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           created_at: new Date().toISOString()
         });
 
-      // Send SMS via Bulk Blaster if configured
+      // Send SMS via Bulk Blaster Cloud Run API
       if (bulkBlasterApiKey) {
         try {
-          await fetch(`https://bulkblaster.in/api/send?apikey=${bulkBlasterApiKey}&mobile=${tenDigit}&msg=Your MedAayu OTP is ${generatedCode}`);
+          const smsRes = await fetch('https://bulkblaster-india-sms-lc-290441563653.asia-south1.run.app/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              apiKey: bulkBlasterApiKey,
+              phone: tenDigit,
+              message: `Your MedAayu OTP is ${generatedCode}. Valid for 5 minutes.`
+            })
+          });
+          const smsData = await smsRes.json();
+          console.log("BulkBlaster SMS response:", smsData);
         } catch (smsErr) {
           console.warn("SMS dispatch error:", smsErr);
         }
