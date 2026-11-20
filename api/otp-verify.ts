@@ -37,20 +37,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           created_at: new Date().toISOString()
         });
 
-      // Send SMS via Bulk Blaster Cloud Run API
+      // Send SMS via Bulk Blaster dedicated Send OTP API
       if (bulkBlasterApiKey) {
         try {
-          const smsRes = await fetch('https://bulkblaster-india-sms-lc-290441563653.asia-south1.run.app/send-sms', {
+          const smsRes = await fetch('https://bulkblaster-otp-api-ch-290441563653.asia-south1.run.app/send-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               apiKey: bulkBlasterApiKey,
               phone: tenDigit,
-              message: `Your MedAayu OTP is ${generatedCode}. Valid for 5 minutes.`
+              otp: generatedCode,
+              brandName: 'MedAayu'
             })
           });
           const smsData = await smsRes.json();
-          console.log("BulkBlaster SMS response:", smsData);
+          console.log("BulkBlaster OTP response:", smsData);
         } catch (smsErr) {
           console.warn("SMS dispatch error:", smsErr);
         }
