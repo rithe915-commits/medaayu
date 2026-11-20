@@ -20,11 +20,11 @@ void main() async {
   // We use fallbacks so the app compiles and launches immediately in local/development mode.
   const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://ysuwnlvmipgfgesdpqdn.supabase.co',
+    defaultValue: 'https://uljezfuiipfnlmggktyp.supabase.co',
   );
   const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD',
+    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsamV6ZnVpaXBmbmxtZ2drdHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNjA4NDgsImV4cCI6MjExMDczNjg0OH0.xtlfubw5-sStd8aSrlEhAIG8Bvj6-8vuZHRktWrHjog',
   );
 
   try {

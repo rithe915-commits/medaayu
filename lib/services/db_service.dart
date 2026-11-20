@@ -33,7 +33,7 @@ class DbService extends ChangeNotifier {
 
   // Private helper to invoke Edge Functions directly without Authorization header (bypasses ES256 gateway issues)
   Future<dynamic> _invokeEdgeFunction(String functionName, Map<String, dynamic> body) async {
-    final apiKey = _client.rest.headers['apikey'] ?? 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
+    final apiKey = _client.rest.headers['apikey'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsamV6ZnVpaXBmbmxtZ2drdHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNjA4NDgsImV4cCI6MjExMDczNjg0OH0.xtlfubw5-sStd8aSrlEhAIG8Bvj6-8vuZHRktWrHjog';
     try {
       final client = HttpClient();
       HttpClientRequest request;
@@ -43,7 +43,7 @@ class DbService extends ChangeNotifier {
         );
       } catch (_) {
         request = await client.postUrl(
-          Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/$functionName'),
+          Uri.parse('https://uljezfuiipfnlmggktyp.supabase.co/functions/v1/$functionName'),
         );
       }
       final sessionToken = _client.auth.currentSession?.accessToken ?? apiKey;

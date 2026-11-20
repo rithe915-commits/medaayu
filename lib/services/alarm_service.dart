@@ -254,7 +254,7 @@ class AlarmService {
     final tenDigitPhone = cleanPhone.length > 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
     if (tenDigitPhone.isEmpty || tenDigitPhone.length < 10) return false;
 
-    final anonKey = 'sb_publishable_IBq3dRoeAggLMh7BWGqYSg_KAuL_BoD';
+    final anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsamV6ZnVpaXBmbmxtZ2drdHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNjA4NDgsImV4cCI6MjExMDczNjg0OH0.xtlfubw5-sStd8aSrlEhAIG8Bvj6-8vuZHRktWrHjog';
 
     try {
       final client = HttpClient();
@@ -266,7 +266,7 @@ class AlarmService {
         );
       } catch (_) {
         request = await client.postUrl(
-          Uri.parse('https://ysuwnlvmipgfgesdpqdn.supabase.co/functions/v1/send-reminder'),
+          Uri.parse('https://uljezfuiipfnlmggktyp.supabase.co/functions/v1/send-reminder'),
         );
       }
       request.headers.set('content-type', 'application/json');
