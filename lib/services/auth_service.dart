@@ -108,9 +108,16 @@ class AuthService extends ChangeNotifier {
     final apiKey = _client.rest.headers['apikey'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsamV6ZnVpaXBmbmxtZ2drdHlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNjA4NDgsImV4cCI6MjExMDczNjg0OH0.xtlfubw5-sStd8aSrlEhAIG8Bvj6-8vuZHRktWrHjog';
     try {
       final client = HttpClient();
-      final request = await client.postUrl(
-        Uri.parse('https://uljezfuiipfnlmggktyp.supabase.co/functions/v1/otp-verify'),
-      );
+      HttpClientRequest request;
+      try {
+        request = await client.postUrl(
+          Uri.parse('https://medaayufinal.vercel.app/api/otp-verify'),
+        );
+      } catch (_) {
+        request = await client.postUrl(
+          Uri.parse('https://uljezfuiipfnlmggktyp.supabase.co/functions/v1/otp-verify'),
+        );
+      }
       request.headers.set('content-type', 'application/json');
       request.headers.set('apikey', apiKey);
       
