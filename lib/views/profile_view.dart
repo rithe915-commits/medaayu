@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/db_service.dart';
-import '../services/invoice_service.dart';
 import 'profile_selector_sheet.dart';
 import '../widgets/delete_with_otp_dialog.dart';
 import '../theme/design_system.dart';
@@ -154,12 +153,6 @@ class _ProfileViewState extends State<ProfileView> {
                   subtitle: "Automated Voice Calls Active • Standard Feature",
                   iconColor: const Color(0xFF6C5CE7),
                   onTap: () => _openPlansScreen(context, widget.profile),
-                ),
-                _MenuItem(
-                  icon: Icons.receipt_long_rounded,
-                  title: "My Invoices",
-                  subtitle: "Payment history and receipts",
-                  onTap: () => _openInvoicesSheet(context, widget.profile),
                 ),
               ],
             ),
@@ -766,83 +759,6 @@ class _PlanCard extends StatelessWidget {
       ),
     );
   }
-}
-
-void _openInvoicesSheet(BuildContext context, Profile profile) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-    builder: (ctx) {
-      return Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("My Invoices", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.receipt_rounded, color: Color(0xFF3A86F0)),
-              title: const Text("Invoice #INV-2026-001"),
-              subtitle: const Text("Premium Tier • 24 Jul 2026 • ₹129.00"),
-              trailing: TextButton.icon(
-                icon: const Icon(Icons.download_rounded, size: 16),
-                label: const Text("Download PDF"),
-                onPressed: () async {
-                  await InvoiceService.downloadInvoice(
-                    profile: profile,
-                    invoiceNo: "INV-2026-001",
-                    dateStr: "24 Jul 2026",
-                    paymentId: "GPA.3312-4981-2291-10023",
-                    planName: "Premium Tier Subscription",
-                    amount: 129.00,
-                    benefits: [
-                      "Automated Voice Call Reminders (TTS)",
-                      "Includes strictly 2 Voice Calls per day",
-                      "Family Medicine Management",
-                      "Secure Health Records Storage (Prescriptions, Lab Reports, Scans)",
-                      "Medication Adherence History Tracking",
-                      "Emergency SOS Caregiver Notifications",
-                      "Support for English, Hindi, and Marathi",
-                    ],
-                  );
-                },
-              ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.receipt_rounded, color: Color(0xFF3A86F0)),
-              title: const Text("Invoice #INV-2026-000"),
-              subtitle: const Text("Standard Tier • 24 Jun 2026 • ₹99.00"),
-              trailing: TextButton.icon(
-                icon: const Icon(Icons.download_rounded, size: 16),
-                label: const Text("Download PDF"),
-                onPressed: () async {
-                  await InvoiceService.downloadInvoice(
-                    profile: profile,
-                    invoiceNo: "INV-2026-000",
-                    dateStr: "24 Jun 2026",
-                    paymentId: "GPA.3312-4981-2291-09941",
-                    planName: "Standard Tier Subscription",
-                    amount: 99.00,
-                    benefits: [
-                      "WhatsApp Medicine Reminders (Multi-lingual)",
-                      "Caregiver WhatsApp Alerts & Summary Reports",
-                      "Family Medicine Management",
-                      "Secure Health Records Storage",
-                      "Support for English, Hindi, and Marathi",
-                    ],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      );
-    },
-  );
 }
 
 void _showAboutDialog(BuildContext context) {
